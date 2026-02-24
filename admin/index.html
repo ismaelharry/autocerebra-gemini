@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AutoCerebra AI — Panel de Administración</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --red:#e8341c; --red-s:rgba(232,52,28,.1); --red-b:rgba(232,52,28,.2);
+  --blue:#1a40ff; --green:#00b86b; --amber:#f0a500;
+  --black:#07090f; --bg:#f5f2ec; --white:#fff;
+  --text:#111520; --muted:#6d7485; --border:rgba(17,21,32,.1);
+  --sidebar-w:240px;
+}
+body{font-family:'Manrope',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;overflow-x:hidden;}
+
+/* ── Login ── */
+#login-screen{position:fixed;inset:0;background:var(--black);display:flex;align-items:center;justify-content:center;z-index:9999;}
+.login-box{background:#111827;border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:44px 40px;width:100%;max-width:420px;}
+.login-logo{font-family:'Syne',sans-serif;font-weight:900;font-size:1.6rem;color:white;text-align:center;margin-bottom:8px;}
+.login-logo b{color:var(--red);}
+.login-sub{color:rgba(255,255,255,.3);font-size:.85rem;text-align:center;margin-bottom:32px;}
+.login-box label{display:block;font-size:.78rem;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;margin-top:16px;}
+.login-box input{width:100%;padding:12px 16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;color:white;font-size:.92rem;outline:none;transition:border-color .2s;font-family:inherit;}
+.login-box input:focus{border-color:var(--red);}
+.login-err{color:#f87171;font-size:.82rem;margin-top:10px;display:none;}
+.btn-login{width:100%;margin-top:24px;padding:14px;background:var(--red);color:white;border:none;border-radius:10px;font-family:'Manrope',sans-serif;font-weight:700;font-size:.92rem;cursor:pointer;transition:opacity .2s;}
+.btn-login:hover{opacity:.88;}
+
+/* ── Layout ── */
+#app{display:flex;width:100%;min-height:100vh;display:none;}
+.sidebar{width:var(--sidebar-w);background:var(--black);display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;z-index:100;}
+.sb-logo{padding:24px 20px 20px;font-family:'Syne',sans-serif;font-weight:900;font-size:1.1rem;color:white;border-bottom:1px solid rgba(255,255,255,.06);}
+.sb-logo b{color:var(--red);}
+.sb-logo small{display:block;font-family:'Manrope',sans-serif;font-weight:400;font-size:.7rem;color:rgba(255,255,255,.25);margin-top:2px;}
+nav.sb-nav{flex:1;padding:16px 12px;display:flex;flex-direction:column;gap:4px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;color:rgba(255,255,255,.4);font-size:.85rem;font-weight:600;transition:all .2s;border:none;background:none;width:100%;text-align:left;}
+.nav-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.8);}
+.nav-item.active{background:rgba(232,52,28,.15);color:var(--red);}
+.nav-item .ni{font-size:1rem;width:20px;text-align:center;}
+.sb-footer{padding:16px;border-top:1px solid rgba(255,255,255,.06);}
+.sb-user{font-size:.78rem;color:rgba(255,255,255,.25);}
+.btn-logout{font-size:.75rem;color:rgba(255,255,255,.3);background:none;border:none;cursor:pointer;padding:6px 0;font-family:inherit;}
+.btn-logout:hover{color:var(--red);}
+
+.main{margin-left:var(--sidebar-w);flex:1;padding:32px;max-width:1200px;}
+.page-header{margin-bottom:28px;}
+.page-header h1{font-family:'Syne',sans-serif;font-weight:900;font-size:1.8rem;letter-spacing:-.03em;margin-bottom:4px;}
+.page-header p{color:var(--muted);font-size:.88rem;}
+
+/* ── Stats cards ── */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+.stat-card{background:white;border:1px solid var(--border);border-radius:16px;padding:20px 22px;}
+.stat-label{font-size:.74rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;}
+.stat-value{font-family:'Syne',sans-serif;font-weight:900;font-size:2rem;letter-spacing:-.04em;line-height:1;}
+.stat-value.cr{color:var(--red);}
+.stat-value.cg{color:var(--green);}
+.stat-value.cb{color:var(--blue);}
+.stat-value.ca{color:var(--amber);}
+
+/* ── Clients table ── */
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.section-header h2{font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;}
+.btn{padding:10px 20px;border-radius:10px;font-family:'Manrope',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;border:none;transition:all .2s;}
+.btn-primary{background:var(--red);color:white;}
+.btn-primary:hover{opacity:.88;}
+.btn-secondary{background:var(--bg);border:1px solid var(--border);color:var(--text);}
+.btn-secondary:hover{border-color:var(--red);color:var(--red);}
+.btn-danger{background:#fef2f2;color:#dc2626;border:1px solid #fecaca;}
+.btn-danger:hover{background:#dc2626;color:white;}
+.btn-sm{padding:6px 12px;font-size:.75rem;border-radius:8px;}
+.btn-icon{padding:8px;width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;font-size:.85rem;}
+
+table{width:100%;border-collapse:collapse;background:white;border-radius:16px;overflow:hidden;border:1px solid var(--border);}
+thead th{padding:12px 16px;text-align:left;font-size:.75rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;background:#fafafa;border-bottom:1px solid var(--border);}
+tbody td{padding:14px 16px;font-size:.86rem;border-bottom:1px solid var(--border);}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:#fafafa;}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:700;}
+.badge-green{background:rgba(0,184,107,.1);color:var(--green);}
+.badge-red{background:var(--red-s);color:var(--red);}
+.badge-gray{background:var(--bg);color:var(--muted);}
+
+/* ── Modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal{background:white;border-radius:20px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,.2);}
+.modal-header{padding:24px 28px 0;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:white;border-bottom:1px solid var(--border);padding-bottom:16px;z-index:1;}
+.modal-header h3{font-family:'Syne',sans-serif;font-weight:800;font-size:1.1rem;}
+.modal-close{background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--muted);padding:4px;}
+.modal-close:hover{color:var(--text);}
+.modal-body{padding:24px 28px;}
+.modal-footer{padding:16px 28px 24px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--border);}
+
+/* ── Form ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.form-full{grid-column:1/-1;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-group label{font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;}
+.form-group input,.form-group select,.form-group textarea{padding:10px 14px;border:1px solid var(--border);border-radius:10px;font-size:.88rem;outline:none;transition:border-color .2s;font-family:inherit;background:white;color:var(--text);}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--red);}
+.form-group textarea{resize:vertical;min-height:80px;}
+.form-section{grid-column:1/-1;padding-top:16px;border-top:1px solid var(--border);margin-top:4px;}
+.form-section h4{font-family:'Syne',sans-serif;font-weight:800;font-size:.88rem;margin-bottom:14px;color:var(--text);}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;}
+.toggle-row label{font-size:.88rem;font-weight:600;}
+.toggle{position:relative;width:44px;height:24px;cursor:pointer;}
+.toggle input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:#d1d5db;border-radius:99px;transition:.3s;}
+.toggle-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:white;border-radius:50%;transition:.3s;}
+.toggle input:checked + .toggle-slider{background:var(--green);}
+.toggle input:checked + .toggle-slider:before{transform:translateX(20px);}
+
+/* ── Snippet box ── */
+.snippet{background:#0d1117;border-radius:12px;padding:16px;font-family:'Courier New',monospace;font-size:.8rem;color:#58a6ff;position:relative;margin-top:10px;}
+.snippet-copy{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.1);border:none;color:#aaa;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:.72rem;font-family:inherit;}
+.snippet-copy:hover{background:rgba(255,255,255,.2);color:white;}
+
+/* ── Leads table ── */
+.leads-section{margin-top:28px;}
+.empty-state{text-align:center;padding:48px 24px;color:var(--muted);}
+.empty-icon{font-size:3rem;margin-bottom:12px;display:block;}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;}
+.toast-item{background:var(--black);color:white;padding:12px 18px;border-radius:10px;font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:0 4px 20px rgba(0,0,0,.2);animation:toastIn .3s ease;}
+@keyframes toastIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.toast-item.success::before{content:'✅';}
+.toast-item.error::before{content:'❌';}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">AutoCerebra <b>AI</b></div>
+    <div class="login-sub">Panel de Administración</div>
+    <label>Usuario</label>
+    <input type="text" id="login-user" placeholder="ismael" autocomplete="username">
+    <label>Contraseña</label>
+    <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+    <div class="login-err" id="login-err">Credenciales incorrectas</div>
+    <button class="btn-login" onclick="doLogin()">Entrar al panel →</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sb-logo">AutoCerebra <b>AI</b><small>Panel de Control</small></div>
+    <nav class="sb-nav">
+      <button class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard">
+        <span class="ni">📊</span> Dashboard
+      </button>
+      <button class="nav-item" onclick="showPage('clients')" id="nav-clients">
+        <span class="ni">🤖</span> Chatbots
+      </button>
+      <button class="nav-item" onclick="showPage('leads')" id="nav-leads">
+        <span class="ni">🎯</span> Leads
+      </button>
+      <button class="nav-item" onclick="showPage('conversations')" id="nav-conversations">
+        <span class="ni">💬</span> Conversaciones
+      </button>
+    </nav>
+    <div class="sb-footer">
+      <div class="sb-user" id="sb-username">Cargando...</div>
+      <button class="btn-logout" onclick="logout()">Cerrar sesión</button>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main">
+    <!-- DASHBOARD -->
+    <div id="page-dashboard">
+      <div class="page-header">
+        <h1>Dashboard</h1>
+        <p>Resumen general de todos tus chatbots</p>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Chatbots activos</div><div class="stat-value cb" id="stat-active">–</div></div>
+        <div class="stat-card"><div class="stat-label">Conversaciones</div><div class="stat-value cr" id="stat-convs">–</div></div>
+        <div class="stat-card"><div class="stat-label">Leads capturados</div><div class="stat-value cg" id="stat-leads">–</div></div>
+        <div class="stat-card"><div class="stat-label">Citas reservadas</div><div class="stat-value ca" id="stat-appts">–</div></div>
+      </div>
+      <div class="section-header">
+        <h2>Leads recientes</h2>
+      </div>
+      <div id="recent-leads-container"></div>
+    </div>
+
+    <!-- CLIENTS -->
+    <div id="page-clients" style="display:none;">
+      <div class="page-header">
+        <h1>Chatbots</h1>
+        <p>Gestiona los chatbots de tus clientes</p>
+      </div>
+      <div class="section-header">
+        <h2>Todos los chatbots</h2>
+        <button class="btn btn-primary" onclick="openNewClientModal()">+ Nuevo chatbot</button>
+      </div>
+      <div id="clients-table-container"></div>
+    </div>
+
+    <!-- LEADS -->
+    <div id="page-leads" style="display:none;">
+      <div class="page-header">
+        <h1>Leads</h1>
+        <p>Todos los contactos capturados por tus chatbots</p>
+      </div>
+      <div class="section-header">
+        <h2>Todos los leads</h2>
+        <button class="btn btn-secondary" onclick="exportLeads()">⬇ Exportar CSV</button>
+      </div>
+      <div id="leads-table-container"></div>
+    </div>
+
+    <!-- CONVERSATIONS -->
+    <div id="page-conversations" style="display:none;">
+      <div class="page-header">
+        <h1>Conversaciones</h1>
+        <p>Historial de conversaciones de todos los chatbots</p>
+      </div>
+      <div id="conversations-container"></div>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL: New/Edit Client -->
+<div class="modal-overlay" id="client-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modal-title">Nuevo chatbot</h3>
+      <button class="modal-close" onclick="closeModal('client-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid" id="client-form">
+
+        <div class="form-section form-full"><h4>🏢 Información del negocio</h4></div>
+        <div class="form-group"><label>Nombre del negocio *</label><input type="text" id="f-business-name" placeholder="Clínica Dental Pérez"></div>
+        <div class="form-group"><label>Tipo de negocio</label><input type="text" id="f-business-type" placeholder="clinica_dental"></div>
+        <div class="form-group form-full"><label>Descripción</label><textarea id="f-business-desc" placeholder="Breve descripción del negocio..."></textarea></div>
+        <div class="form-group"><label>Teléfono</label><input type="text" id="f-business-phone" placeholder="+34 963 123 456"></div>
+        <div class="form-group"><label>Email del negocio</label><input type="email" id="f-business-email" placeholder="info@negocio.com"></div>
+        <div class="form-group"><label>Dirección</label><input type="text" id="f-business-address" placeholder="Calle Mayor 12, Valencia"></div>
+        <div class="form-group"><label>Web</label><input type="text" id="f-business-web" placeholder="https://negocio.com"></div>
+        <div class="form-group form-full"><label>Horario (ej: Lun-Vie 9:00-20:00, Sáb 9:00-14:00)</label><input type="text" id="f-business-hours" placeholder="Lun-Vie 9:00-20:00"></div>
+
+        <div class="form-section form-full"><h4>🤖 Configuración del bot</h4></div>
+        <div class="form-group"><label>Nombre del asistente *</label><input type="text" id="f-bot-name" placeholder="Sara"></div>
+        <div class="form-group"><label>Avatar (emoji)</label><input type="text" id="f-bot-avatar" placeholder="🦷" maxlength="4"></div>
+        <div class="form-group form-full"><label>Mensaje de bienvenida</label><textarea id="f-bot-greeting" placeholder="¡Hola! Soy Sara, la asistente de Clínica Pérez. ¿En qué puedo ayudarte?"></textarea></div>
+        <div class="form-group form-full"><label>Tono de voz</label>
+          <select id="f-bot-tone">
+            <option value="profesional y cercano">Profesional y cercano</option>
+            <option value="muy formal">Muy formal</option>
+            <option value="informal y amigable">Informal y amigable</option>
+            <option value="técnico y preciso">Técnico y preciso</option>
+          </select>
+        </div>
+
+        <div class="form-section form-full"><h4>🛎️ Servicios (uno por línea: Nombre | Precio | Descripción)</h4></div>
+        <div class="form-group form-full"><label>Servicios</label>
+          <textarea id="f-services" rows="5" placeholder="Revisión dental | 60€ | Revisión completa con limpieza\nOrtodoncia | desde 1.500€ | Brackets metálicos o invisibles\nBlanqueamiento | 200€ | Tratamiento profesional"></textarea>
+        </div>
+
+        <div class="form-section form-full"><h4>❓ Preguntas frecuentes (una por línea: Pregunta | Respuesta)</h4></div>
+        <div class="form-group form-full">
+          <textarea id="f-faq" rows="4" placeholder="¿Aceptáis seguros? | Sí, trabajamos con Adeslas, Asisa y Mapfre\n¿Hay aparcamiento? | Sí, hay parking público a 50m"></textarea>
+        </div>
+
+        <div class="form-section form-full"><h4>📅 Reservas</h4></div>
+        <div class="toggle-row form-full">
+          <label>Activar gestión de citas</label>
+          <label class="toggle"><input type="checkbox" id="f-booking-enabled"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="form-group form-full">
+          <label>Sistema de reservas</label>
+          <select id="f-booking-type">
+            <option value="google_calendar">Google Calendar</option>
+            <option value="calendly">Calendly</option>
+            <option value="both">Ambos</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Calendly API Key</label><input type="text" id="f-calendly-key" placeholder="eyJhbGci..."></div>
+        <div class="form-group"><label>Calendly Event Type URI</label><input type="text" id="f-calendly-uri" placeholder="https://api.calendly.com/event_types/..."></div>
+
+        <div class="form-section form-full"><h4>🎯 Leads y notificaciones</h4></div>
+        <div class="form-group form-full"><label>Email para notificaciones (leads, citas, escalados)</label><input type="email" id="f-notify-email" placeholder="ismael@autocerebra.ai"></div>
+
+        <div class="form-section form-full"><h4>🚨 Escalado a humano</h4></div>
+        <div class="form-group"><label>WhatsApp del negocio</label><input type="text" id="f-whatsapp" placeholder="+34 611 128 132"></div>
+        <div class="form-group form-full"><label>Palabras clave para escalar (separadas por coma)</label>
+          <input type="text" id="f-keywords" placeholder="urgencia, dolor, emergencia, hablar con alguien, queja">
+        </div>
+
+        <div class="form-section form-full"><h4>🎨 Widget</h4></div>
+        <div class="form-group"><label>Color principal</label><input type="color" id="f-color" value="#e8341c"></div>
+        <div class="form-group"><label>Posición</label>
+          <select id="f-position"><option value="bottom-right">Abajo derecha</option><option value="bottom-left">Abajo izquierda</option></select>
+        </div>
+        <div class="toggle-row form-full">
+          <label>Abrir automáticamente al cargar la web</label>
+          <label class="toggle"><input type="checkbox" id="f-initial-open"><span class="toggle-slider"></span></label>
+        </div>
+
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('client-modal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveClient()">Guardar chatbot</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Snippet -->
+<div class="modal-overlay" id="snippet-modal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h3>📋 Código de instalación</h3>
+      <button class="modal-close" onclick="closeModal('snippet-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--muted);font-size:.88rem;margin-bottom:16px;">Copia y pega este código en el HTML de la web del cliente, justo antes del <code>&lt;/body&gt;</code>.</p>
+      <div class="snippet" id="snippet-code">
+        <button class="snippet-copy" onclick="copySnippet()">Copiar</button>
+        <span id="snippet-text"></span>
+      </div>
+      <p style="color:var(--muted);font-size:.8rem;margin-top:12px;">⚡ El widget se activa automáticamente. No requiere más configuración.</p>
+      <div style="margin-top:20px;padding:16px;background:var(--bg);border-radius:12px;">
+        <p style="font-size:.82rem;font-weight:700;margin-bottom:6px;">🔗 Vincular Google Calendar</p>
+        <p style="font-size:.8rem;color:var(--muted);margin-bottom:10px;">Haz clic para que el cliente autorice su Google Calendar:</p>
+        <button class="btn btn-secondary btn-sm" onclick="startGoogleAuth()">Conectar Google Calendar →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const API = '';
+let token = localStorage.getItem('ac_token') || null;
+let currentUser = null;
+let editingClientId = null;
+let snippetClientId = null;
+
+// ── Auth ───────────────────────────────────────────────────────
+async function doLogin() {
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value;
+  try {
+    const res = await api('/admin/login', 'POST', { username: u, password: p }, false);
+    token = res.token;
+    currentUser = res.username;
+    localStorage.setItem('ac_token', token);
+    showApp();
+  } catch {
+    document.getElementById('login-err').style.display = 'block';
+  }
+}
+document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+async function checkAuth() {
+  if (!token) return;
+  try {
+    const me = await api('/admin/me');
+    currentUser = me.username;
+    showApp();
+  } catch {
+    token = null;
+    localStorage.removeItem('ac_token');
+  }
+}
+
+function showApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('sb-username').textContent = `👤 ${currentUser}`;
+  loadDashboard();
+}
+
+function logout() {
+  token = null;
+  localStorage.removeItem('ac_token');
+  location.reload();
+}
+
+// ── API helper ─────────────────────────────────────────────────
+async function api(path, method = 'GET', body = null, auth = true) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (auth && token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(API + '/api' + path, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : null,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Error desconocido');
+  return data;
+}
+
+// ── Navigation ─────────────────────────────────────────────────
+function showPage(page) {
+  ['dashboard','clients','leads','conversations'].forEach(p => {
+    document.getElementById('page-' + p).style.display = p === page ? 'block' : 'none';
+    document.getElementById('nav-' + p).classList.toggle('active', p === page);
+  });
+  if (page === 'dashboard')     loadDashboard();
+  if (page === 'clients')       loadClients();
+  if (page === 'leads')         loadLeads();
+  if (page === 'conversations') loadConversations();
+}
+
+// ── Dashboard ──────────────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const stats = await api('/admin/stats');
+    document.getElementById('stat-active').textContent = stats.activeClients;
+    document.getElementById('stat-convs').textContent  = stats.totalConversations;
+    document.getElementById('stat-leads').textContent  = stats.totalLeads;
+    document.getElementById('stat-appts').textContent  = stats.totalAppointments;
+
+    const c = document.getElementById('recent-leads-container');
+    if (!stats.recentLeads?.length) { c.innerHTML = '<div class="empty-state"><span class="empty-icon">🎯</span><p>Sin leads todavía. Cuando un chatbot capture uno, aparecerá aquí.</p></div>'; return; }
+    c.innerHTML = renderLeadsTable(stats.recentLeads);
+  } catch(e) { console.error(e); }
+}
+
+// ── Clients ────────────────────────────────────────────────────
+async function loadClients() {
+  try {
+    const clients = await api('/admin/clients');
+    const c = document.getElementById('clients-table-container');
+    if (!clients.length) {
+      c.innerHTML = '<div class="empty-state"><span class="empty-icon">🤖</span><p>No hay chatbots todavía. Crea el primero.</p></div>';
+      return;
+    }
+    c.innerHTML = `
+      <table>
+        <thead><tr>
+          <th>Negocio</th><th>Bot</th><th>Estado</th>
+          <th>Conversaciones</th><th>Leads</th><th>Citas</th>
+          <th>Reservas</th><th>Acciones</th>
+        </tr></thead>
+        <tbody>
+          ${clients.map(cl => `
+            <tr>
+              <td><strong>${cl.business?.name || '-'}</strong><br><small style="color:var(--muted)">${cl.business?.type || ''}</small></td>
+              <td>${cl.bot?.avatar || '🤖'} ${cl.bot?.name || '-'}</td>
+              <td><span class="badge ${cl.active ? 'badge-green' : 'badge-gray'}">${cl.active ? '● Activo' : '● Inactivo'}</span></td>
+              <td>${cl.stats?.conversations || 0}</td>
+              <td>${cl.stats?.leadsCapture || 0}</td>
+              <td>${cl.stats?.appointmentsBooked || 0}</td>
+              <td>${cl.booking?.enabled ? (cl.booking?.googleCalendar?.connected ? '📅 GCal ✓' : cl.booking?.calendly?.connected ? '📆 Calendly ✓' : '⚠️ Sin conf.') : '—'}</td>
+              <td>
+                <div style="display:flex;gap:6px;">
+                  <button class="btn btn-secondary btn-sm btn-icon" onclick="showSnippet('${cl.id}')" title="Código de instalación">📋</button>
+                  <button class="btn btn-secondary btn-sm btn-icon" onclick="editClient('${cl.id}')" title="Editar">✏️</button>
+                  <button class="btn btn-secondary btn-sm btn-icon" onclick="toggleClient('${cl.id}')" title="${cl.active ? 'Desactivar' : 'Activar'}">${cl.active ? '⏸' : '▶️'}</button>
+                  <button class="btn btn-danger btn-sm btn-icon" onclick="deleteClient('${cl.id}')" title="Eliminar">🗑</button>
+                </div>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>`;
+  } catch(e) { console.error(e); }
+}
+
+function openNewClientModal() {
+  editingClientId = null;
+  document.getElementById('modal-title').textContent = 'Nuevo chatbot';
+  clearForm();
+  openModal('client-modal');
+}
+
+async function editClient(id) {
+  editingClientId = id;
+  document.getElementById('modal-title').textContent = 'Editar chatbot';
+  try {
+    const cl = await api('/admin/clients/' + id);
+    fillForm(cl);
+    openModal('client-modal');
+  } catch(e) { toast('Error cargando cliente', 'error'); }
+}
+
+async function saveClient() {
+  const data = readForm();
+  if (!data.business.name || !data.bot.name) { toast('Nombre del negocio y bot son obligatorios', 'error'); return; }
+
+  try {
+    if (editingClientId) {
+      await api('/admin/clients/' + editingClientId, 'PUT', data);
+      toast('Chatbot actualizado ✅');
+    } else {
+      await api('/admin/clients', 'POST', data);
+      toast('Chatbot creado ✅');
+    }
+    closeModal('client-modal');
+    loadClients();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function deleteClient(id) {
+  if (!confirm('¿Eliminar este chatbot? Esta acción no se puede deshacer.')) return;
+  try {
+    await api('/admin/clients/' + id, 'DELETE');
+    toast('Chatbot eliminado');
+    loadClients();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function toggleClient(id) {
+  try {
+    const res = await api('/admin/clients/' + id + '/toggle', 'PATCH');
+    toast(res.active ? 'Chatbot activado ▶️' : 'Chatbot pausado ⏸');
+    loadClients();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ── Snippet ────────────────────────────────────────────────────
+function showSnippet(clientId) {
+  snippetClientId = clientId;
+  const backendUrl = window.location.origin;
+  const code = `<!-- AutoCerebra AI Chatbot -->\n<script src="${backendUrl}/widget.js?clientId=${clientId}"><\/script>`;
+  document.getElementById('snippet-text').textContent = code;
+  openModal('snippet-modal');
+}
+
+function copySnippet() {
+  const text = document.getElementById('snippet-text').textContent;
+  navigator.clipboard.writeText(text).then(() => toast('Código copiado 📋'));
+}
+
+async function startGoogleAuth() {
+  if (!snippetClientId) return;
+  try {
+    const res = await api('/admin/clients/' + snippetClientId + '/google-auth');
+    window.open(res.authUrl, '_blank', 'width=600,height=700');
+    toast('Abre la ventana y autoriza Google Calendar');
+  } catch(e) { toast('Error iniciando OAuth: ' + e.message, 'error'); }
+}
+
+// ── Leads ──────────────────────────────────────────────────────
+async function loadLeads() {
+  try {
+    const leads = await api('/admin/leads');
+    const c = document.getElementById('leads-table-container');
+    if (!leads.length) { c.innerHTML = '<div class="empty-state"><span class="empty-icon">🎯</span><p>Sin leads todavía.</p></div>'; return; }
+    c.innerHTML = renderLeadsTable(leads);
+  } catch(e) {}
+}
+
+function renderLeadsTable(leads) {
+  return `
+    <table>
+      <thead><tr><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Interés</th><th>Chatbot</th><th>Fecha</th></tr></thead>
+      <tbody>
+        ${leads.map(l => `
+          <tr>
+            <td><strong>${l.name || '-'}</strong></td>
+            <td>${l.email ? `<a href="mailto:${l.email}" style="color:var(--blue)">${l.email}</a>` : '-'}</td>
+            <td>${l.phone || '-'}</td>
+            <td>${l.interest || '-'}</td>
+            <td><span class="badge badge-gray">${l.clientName || l.clientId || '-'}</span></td>
+            <td style="color:var(--muted);font-size:.78rem">${l.capturedAt ? new Date(l.capturedAt).toLocaleString('es-ES') : '-'}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function exportLeads() {
+  api('/admin/leads').then(leads => {
+    const csv = ['Nombre,Email,Teléfono,Interés,Chatbot,Fecha',
+      ...leads.map(l => `"${l.name||''}","${l.email||''}","${l.phone||''}","${l.interest||''}","${l.clientName||''}","${l.capturedAt||''}"`)
+    ].join('\n');
+    const a = document.createElement('a');
+    a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    a.download = 'leads-autocerebra.csv';
+    a.click();
+  });
+}
+
+// ── Conversations ──────────────────────────────────────────────
+async function loadConversations() {
+  try {
+    const clients = await api('/admin/clients');
+    const c = document.getElementById('conversations-container');
+    if (!clients.length) { c.innerHTML = '<div class="empty-state"><span class="empty-icon">💬</span><p>Sin conversaciones.</p></div>'; return; }
+
+    c.innerHTML = `
+      <div style="margin-bottom:16px;">
+        <select onchange="loadClientConversations(this.value)" style="padding:10px 14px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:.88rem;background:white;">
+          <option value="">Selecciona un chatbot</option>
+          ${clients.map(cl => `<option value="${cl.id}">${cl.business?.name} (${cl.bot?.name})</option>`).join('')}
+        </select>
+      </div>
+      <div id="conv-list"></div>`;
+  } catch(e) {}
+}
+
+async function loadClientConversations(clientId) {
+  if (!clientId) return;
+  try {
+    const convs = await api('/admin/conversations/' + clientId);
+    const c = document.getElementById('conv-list');
+    if (!convs.length) { c.innerHTML = '<div class="empty-state"><p>Sin conversaciones para este chatbot.</p></div>'; return; }
+    c.innerHTML = convs.map(conv => {
+      const msgs = conv.messages?.filter(m => m.role !== 'system') || [];
+      const lastMsg = msgs[msgs.length - 1];
+      const preview = lastMsg?.content?.[0]?.text || (typeof lastMsg?.content === 'string' ? lastMsg.content : '…');
+      return `
+        <div style="background:white;border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:10px;cursor:pointer;" onclick="toggleConv(this)">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-weight:600;font-size:.88rem">Sesión: ${conv.sessionId?.substring(0,8)}...</span>
+            <span style="color:var(--muted);font-size:.75rem">${new Date(conv.updatedAt).toLocaleString('es-ES')}</span>
+          </div>
+          <p style="color:var(--muted);font-size:.82rem;margin-top:4px;">${String(preview).substring(0,100)}...</p>
+          <div style="display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+            ${msgs.slice(-10).map(m => {
+              const txt = typeof m.content === 'string' ? m.content : (m.content?.[0]?.text || '[tool call]');
+              return `<div style="margin-bottom:8px;display:flex;gap:8px;align-items:flex-start;">
+                <span style="font-size:.72rem;font-weight:700;color:${m.role==='user'?'var(--blue)':'var(--red)'};flex-shrink:0;text-transform:uppercase;padding-top:2px;">${m.role==='user'?'Usuario':'Bot'}</span>
+                <span style="font-size:.84rem;color:var(--text)">${String(txt).substring(0,300)}</span>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+    }).join('');
+  } catch(e) {}
+}
+
+function toggleConv(el) {
+  const detail = el.querySelector('div[style*="display:none"], div[style*="display: none"]');
+  if (detail) detail.style.display = detail.style.display === 'none' ? 'block' : 'none';
+}
+
+// ── Form helpers ───────────────────────────────────────────────
+function clearForm() {
+  ['f-business-name','f-business-type','f-business-desc','f-business-phone','f-business-email',
+   'f-business-address','f-business-web','f-business-hours','f-bot-name','f-bot-avatar',
+   'f-bot-greeting','f-services','f-faq','f-calendly-key','f-calendly-uri',
+   'f-notify-email','f-whatsapp','f-keywords'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('f-color').value = '#e8341c';
+  document.getElementById('f-booking-enabled').checked = false;
+  document.getElementById('f-initial-open').checked = false;
+}
+
+function fillForm(cl) {
+  const set = (id, val) => { const el = document.getElementById(id); if(el && val !== undefined) el.value = val; };
+  set('f-business-name',   cl.business?.name);
+  set('f-business-type',   cl.business?.type);
+  set('f-business-desc',   cl.business?.description);
+  set('f-business-phone',  cl.business?.phone);
+  set('f-business-email',  cl.business?.email);
+  set('f-business-address',cl.business?.address);
+  set('f-business-web',    cl.business?.website);
+  set('f-business-hours',  typeof cl.business?.hours === 'string' ? cl.business.hours : JSON.stringify(cl.business?.hours || {}));
+  set('f-bot-name',    cl.bot?.name);
+  set('f-bot-avatar',  cl.bot?.avatar);
+  set('f-bot-greeting',cl.bot?.greeting);
+  set('f-bot-tone',    cl.bot?.tone);
+  set('f-services', (cl.services||[]).map(s => `${s.name} | ${s.price} | ${s.description||''}`).join('\n'));
+  set('f-faq', (cl.faq||[]).map(f => `${f.question} | ${f.answer}`).join('\n'));
+  document.getElementById('f-booking-enabled').checked = !!cl.booking?.enabled;
+  set('f-booking-type',    cl.booking?.type);
+  set('f-calendly-key',    cl.booking?.calendly?.apiKey);
+  set('f-calendly-uri',    cl.booking?.calendly?.eventTypeUri);
+  set('f-notify-email',    cl.leads?.notifyEmail);
+  set('f-whatsapp',        cl.escalation?.whatsapp);
+  set('f-keywords',        (cl.escalation?.triggerKeywords||[]).join(', '));
+  set('f-color',           cl.widget?.primaryColor || '#e8341c');
+  set('f-position',        cl.widget?.position);
+  document.getElementById('f-initial-open').checked = !!cl.widget?.initialOpen;
+}
+
+function readForm() {
+  const v = id => document.getElementById(id)?.value?.trim() || '';
+
+  const services = v('f-services').split('\n').filter(Boolean).map(line => {
+    const [name, price, ...rest] = line.split('|').map(s => s.trim());
+    return { name, price: price||'Consultar', description: rest.join(' ').trim() };
+  });
+
+  const faq = v('f-faq').split('\n').filter(Boolean).map(line => {
+    const [question, ...rest] = line.split('|').map(s => s.trim());
+    return { question, answer: rest.join('|').trim() };
+  });
+
+  const keywords = v('f-keywords').split(',').map(k => k.trim()).filter(Boolean);
+
+  return {
+    business: {
+      name:        v('f-business-name'),
+      type:        v('f-business-type'),
+      description: v('f-business-desc'),
+      phone:       v('f-business-phone'),
+      email:       v('f-business-email'),
+      address:     v('f-business-address'),
+      website:     v('f-business-web'),
+      hours:       v('f-business-hours'),
+    },
+    bot: {
+      name:     v('f-bot-name'),
+      avatar:   v('f-bot-avatar') || '🤖',
+      greeting: v('f-bot-greeting'),
+      tone:     v('f-bot-tone'),
+      language: 'es',
+    },
+    services,
+    faq,
+    booking: {
+      enabled:    document.getElementById('f-booking-enabled').checked,
+      type:       v('f-booking-type') || 'google_calendar',
+      confirmationEmail: true,
+      calendly: {
+        apiKey:        v('f-calendly-key'),
+        eventTypeUri:  v('f-calendly-uri'),
+      },
+    },
+    leads: { enabled: true, notifyEmail: v('f-notify-email') },
+    escalation: { enabled: true, whatsapp: v('f-whatsapp'), triggerKeywords: keywords },
+    widget: {
+      primaryColor: v('f-color') || '#e8341c',
+      position:     v('f-position') || 'bottom-right',
+      initialOpen:  document.getElementById('f-initial-open').checked,
+    },
+  };
+}
+
+// ── Modal helpers ──────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ── Toast ──────────────────────────────────────────────────────
+function toast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  const item = document.createElement('div');
+  item.className = 'toast-item ' + type;
+  item.textContent = msg;
+  t.appendChild(item);
+  setTimeout(() => item.remove(), 3500);
+}
+
+// ── Boot ───────────────────────────────────────────────────────
+checkAuth();
+</script>
+</body>
+</html>
