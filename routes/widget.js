@@ -281,7 +281,7 @@ module.exports = (req, res) => {
 })();
 `;
 
-  res.setHeader('Content-Type', 'application/javascript');
-  res.setHeader('Cache-Control', 'public, max-age=300'); // 5min cache
-  res.send(widgetScript);
+res.setHeader('Content-Type', 'application/javascript');
+res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+res.setHeader('Access-Control-Allow-Origin', '*');
 };
